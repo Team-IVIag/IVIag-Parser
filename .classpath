@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre1.8.0_72"/>
+	<classpathentry kind="lib" path="/MagViewer/jsoup-1.8.1.jar" sourcepath="/MagViewer/jsoup-1.8.1.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/MagViewer/jsoup-1.8.1-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
