@@ -128,14 +128,20 @@ public class IVIagParser {
 				String link;
 				Elements eles;
 				
-				if(!(eles = ele.getElementsByTag("span")).isEmpty()) {
-					title = eles.get(0).getElementsByTag("a").get(0).ownText();
-					link = eles.get(0).getElementsByTag("a").get(0).attr("href");
-				}else if(!(eles = ele.getElementsByTag("img")).isEmpty()) {
+				//String, img check
+				if(!(eles = ele.getElementsByTag("img")).isEmpty()) {
 					title = VOLUME_IMG_TAG;
 					link = eles.get(0).attr("src");
+				}else if(!(eles = ele.getElementsByTag("span")).isEmpty()) {
+					title = IVIagParser.getOwnText(ele);
+					link = eles.get(0).getElementsByTag("a").get(0).attr("href");
 				}else {
 					continue;
+				}
+				
+				//null check
+				if(title == null) {
+					title = "undefined";
 				}
 				
 				//Check repetition
@@ -169,5 +175,42 @@ public class IVIagParser {
 			}
 		}
 		return -1;
+	}
+	
+	private static String getOwnText(Element ele) throws Exception {
+		return IVIagParser.getOwnText(ele, 0);
+	}
+	
+	private static String getOwnText(Element ele, int repeat) throws Exception {
+		if(repeat > 1024) {
+			throw new Exception(TAG + " getOwnText too many recursive function");
+		}
+		
+		if(ele.ownText().length() > 0) {
+			return ele.ownText();
+		}else if(!ele.children().isEmpty()) {
+			Elements eles = ele.children();
+			String ownText = null;
+			for(int p = 0; p < eles.size(); p++) {
+				if((ownText = IVIagParser.getOwnText(eles.get(p), repeat + 1)) != null) {
+					break;
+				}
+			}
+			return ownText;
+		}else {
+			return null;
+		}
+	}
+	
+	private static String getUrl(Element ele, int repeat) {
+		return "a";
+	}
+	
+	private static String stringToCode(String str) {
+		String codes = "";
+		for(int p = 0; p < str.length(); p++) {
+			codes += (int) str.charAt(p) + " ";
+		}
+		return codes;
 	}
 }
