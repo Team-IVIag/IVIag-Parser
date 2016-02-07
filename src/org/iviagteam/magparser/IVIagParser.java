@@ -2,6 +2,7 @@ package org.iviagteam.magparser;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -20,6 +21,7 @@ public class IVIagParser {
 	private final static String userAgentToken = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.111 Safari/537.36";
 	private final static String referrerPage = "http://www.google.com";
 	private final static String searchLinkSample = "http://marumaru.in/?r=home&mod=search&keyword={%k}&x=0&y=0";
+	private final static String MANGA_PREFIX = "http://www.shencomics.com/archives/";
 	
 	public final static String VOLUME_IMG_TAG = "{%img}";
 	
@@ -48,8 +50,7 @@ public class IVIagParser {
 		}
 		
 		//Choose type
-		Elements magList = doc.getElementsByClass("postbox").get(0)
-					.getElementsByTag("a");
+		Elements magList = doc.select(".postbox a");
 		if(!magList.isEmpty()) {
 			type = SearchParse.TYPE1;
 		}else {
@@ -62,14 +63,11 @@ public class IVIagParser {
 		case TYPE1:
 			for(Element ele : magList) {
 				try{
-					Elements tmpList = ele.getElementsByTag("table").get(0)
-							.getElementsByTag("tbody").get(0)
-							.getElementsByTag("tr").get(0)
-							.getElementsByTag("td");
+					Elements tmpList = ele.select("table tbody tr td");
 					
 					String magUrl = ele.attr("href");
-					String title = tmpList.get(1).getElementsByClass("sbjbox").get(0).getElementsByTag("b").get(0).ownText();
-					String thumb = tmpList.get(0).getElementsByClass("thumb").get(0).getElementsByTag("img").get(0).attr("src");
+					String title = tmpList.get(1).select(".sbjbox b").get(0).ownText();
+					String thumb = tmpList.get(0).select(".thumb img").get(0).attr("src");
 					
 					urlList.add(new String[] {title, thumb, magUrl});
 					System.out.println(TAG + " Parsing success: " + title);
@@ -112,8 +110,7 @@ public class IVIagParser {
 		}
 		
 		//Choose type
-		Elements magList = doc.getElementsByClass("content").get(0)
-				.getElementsByTag("div");
+		Elements magList = doc.select(".content div");
 		type = VolumeParse.TYPE1;
 		
 		//Read Elements
@@ -160,6 +157,33 @@ public class IVIagParser {
 		}
 		
 		return list;
+	}
+	
+	//만화의 URL (marumaru.in/b/manga/숫자 꼴)로 화 목록을 불러옵니다.
+	public static TreeMap<String, String> getMangaList(String mangaUrl){
+		if(url.startsWith("https")) url.replaceFirst("https", "http");
+		
+		TreeMap<String, String> map = new TreeMap<>();
+		
+		//Try connect
+		try {
+			System.out.println(TAG + " try to connect '" + url + "'...");
+			Document doc = Jsoup.connect(url)
+					.userAgent(userAgentToken)
+					.followRedirects(true)
+					.referrer(referrerPage)
+					.timeout(30000)
+					.get();
+			
+			doc.select("#vContent a[href^=" + MANGA_PREFIX + "]").forEach((v) -> {
+				list.put(v.ownText(), v.attr("href"));
+			});
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.out.println(TAG + " Connection error");
+		}
+		
+		return map;
 	}
 	
 	public static ArrayList<String> ParseMag(String url) {
