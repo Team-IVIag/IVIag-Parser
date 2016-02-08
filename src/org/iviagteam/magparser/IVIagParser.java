@@ -16,14 +16,18 @@ import org.jsoup.select.Elements;
 
 public class IVIagParser {
 	
+	public static final String VERSION = "1.0";
+	public static final Integer VERSION_CODE = 1;
 	public static final String TAG = "[IVIagParser]";
 
-	private final static String USER_AGENT_TOKEN = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.111 Safari/537.36";
-	private final static String REFERRER_PAGE = "http://www.google.com";
-	private final static String SEARCH_LINK_SAMPLE = "http://marumaru.in/?r=home&mod=search&keyword={%k}&x=0&y=0";
-	private final static String MANGA_PREFIX = "http://www.shencomics.com/archives/";
+	private static final String USER_AGENT_TOKEN = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.111 Safari/537.36";
+	private static final String REFERRER_PAGE = "http://www.google.com";
+	private static final String SEARCH_LINK_SAMPLE = "http://marumaru.in/?r=home&mod=search&keyword={%k}&x=0&y=0";
+	private static final String MANGA_PREFIX = "http://www.shencomics.com/archives/";
 	
-	public final static String VOLUME_IMG_TAG = "{%img}";
+	public static final String VOLUME_IMG_TAG = "{%img}";
+	public static final String MAG_TITLE_TAG = "{%title}";
+	public static final String ILLEGAL_CHARS = "\\/:?\"*<>|";
 	
 	public static String[] CLOUD_PROXY_COOKIE = new String[] {"sucuri_cloudproxy_uuid_000000000", "00000000000000000000000000000000"};
 	
@@ -140,7 +144,7 @@ public class IVIagParser {
 				}
 				
 				//Check repetition
-				int rpIndex = IVIagParser.hasUrl(list, magUrl);
+				int rpIndex = IVIagParser.indexOfUrlList(list, magUrl);
 				if(rpIndex >= 0) {
 					System.out.println(TAG + " This link is repetition (index:" + rpIndex + ") <" + magUrl + "> will be remove");
 					list.remove(rpIndex);
@@ -239,14 +243,20 @@ public class IVIagParser {
 	
 	
 	public static ArrayList<String[]> ParseMag(String url) {
-		System.out.println(TAG + " ParseMag - Parsing Manga request: " + url);
-		
 		return IVIagParser.ParseMag(url, false);
 	}
 	
 	
 	
-	private static ArrayList<String[]> ParseMag(String url, boolean repeat) {
+	public static ArrayList<String[]> ParseMag(String url , Boolean force) {
+		System.out.println(TAG + " ParseMag - Parsing Manga request: " + url);
+		
+		return IVIagParser.ParseMag(url, force, false);
+	}
+	
+	
+	
+	private static ArrayList<String[]> ParseMag(String url, Boolean force, Boolean repeat) {
 		
 		//init
 		ArrayList<String[]> list = new ArrayList<>();
@@ -257,6 +267,7 @@ public class IVIagParser {
 		//Try connect
 		try {
 			System.out.println(TAG + " Try to connect '" + url + "'...");
+
 			doc = Jsoup.connect(url)
 					.userAgent(USER_AGENT_TOKEN)
 					.followRedirects(true)
@@ -270,6 +281,7 @@ public class IVIagParser {
 			return null;
 		}
 		
+		//Check CloudProxy
 		if(doc.title().equals("You are being redirected...")) {
 			
 			if(repeat) {
@@ -277,17 +289,57 @@ public class IVIagParser {
 				return null;
 			}
 			
-			return IVIagParser.detourCloudProxy(doc, url);
+			//Try detour
+			return IVIagParser.detourCloudProxy(doc, url, force);
 		}
 		
-		//TODO
+		//Title parsing
+		Elements title = doc.select("#content .entry-title");
+		if(!title.isEmpty()) {
+			try {
+				String titleStr = IVIagParser.getOwnText(title.get(0));
+				list.add(new String[] {IVIagParser.MAG_TITLE_TAG, titleStr});
+				System.out.println(TAG + " Title parsing success: " + titleStr);
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println(TAG + " Fail parsing Manga Title");
+				list.add(new String[] {IVIagParser.MAG_TITLE_TAG, "undefined"});
+			}
+		}
+		
+		//Manga parsing
+		Elements pages = doc.select("#content img[src~=(?i)\\.(png|jpe?g|gif|bmp)]");
+		System.out.println(TAG + " Page find: " + pages.size());
+		for(Element page : pages) {
+			try {
+				//LazyLoad Check
+				String pageUrl = page.attr("data-lazy-src");
+				if(pageUrl.equals("")) {
+					pageUrl = page.attr("src");	
+				}
+				
+				//Parse filename
+				String[] tmpSptUrl = pageUrl.split("/");
+				String pageTitle = (tmpSptUrl[tmpSptUrl.length - 1]).split("\\?")[0];
+				
+				//Check file name is valid
+				pageTitle = IVIagParser.illegalCharFixer(pageTitle);
+				
+				list.add(new String[] {pageTitle, pageUrl});
+				System.out.println(TAG + " Page parsing Success: " + pageTitle);
+			}catch(Exception e) {
+				e.printStackTrace();
+				System.out.println(TAG + " Page parsing Fail: " + page.toString());
+			}
+		}
+		//TODO: implement this parser
 		
 		return list;
 	}
 	
 	
 	
-	private static int hasUrl(ArrayList<String[]> list, String url) {
+	private static int indexOfUrlList(ArrayList<String[]> list, String url) {
 		for(String[] eles : list) {
 			for(String ele : eles) {
 				if(ele == url) return list.indexOf(eles);
@@ -304,7 +356,7 @@ public class IVIagParser {
 	
 	
 	
-	private static String getOwnText(Element ele, int repeat) throws Exception {
+	private static String getOwnText(Element ele, Integer repeat) throws Exception {
 		if(repeat > 1024) {
 			throw new Exception(TAG + " getOwnText too many recursive function");
 		}
@@ -345,18 +397,17 @@ public class IVIagParser {
 	
 	
 	
-	private static  ArrayList<String[]> detourCloudProxy(Document cfDoc, String refreshUrl) {
+	private static  ArrayList<String[]> detourCloudProxy(Document cfDoc, String refreshUrl, Boolean force) {
 		System.out.println(TAG + " Try detour CloudProxy...");
 		
 		try {
 			ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("JavaScript");
 			scriptEngine.eval(
 					"var document = {};"
-					+ "var location = {};"
-					+ "location.reload = function(){"
+					+ "var location = {reload: function(){"
 						+ "org.iviagteam.magparser.IVIagParser.CLOUD_PROXY_COOKIE[0] = document.cookie.toString().split('=')[0];"
 						+ "org.iviagteam.magparser.IVIagParser.CLOUD_PROXY_COOKIE[1] = document.cookie.toString().split('=')[1];"
-					+ "};" 
+					+ "}};"
 					+ cfDoc.getElementsByTag("script").get(0).data() + ";"
 					+ "print('[JavaScriptEngine] Cookie: ' + document.cookie);"
 					);
@@ -365,6 +416,31 @@ public class IVIagParser {
 			System.out.println(TAG + " Fail to eval script");
 		}
 		
-		return IVIagParser.ParseMag(refreshUrl, true);
+		return IVIagParser.ParseMag(refreshUrl, true, force);
+	}
+	
+	
+	
+	public static ArrayList<Integer> illegalCharIndex(String str) {
+		ArrayList<Integer> index =  new ArrayList<>();
+		for(int p = 0; p < str.length(); p++) {
+			if(IVIagParser.ILLEGAL_CHARS.indexOf(str.charAt(p)) >= 0) {
+				index.add(p);
+			}
+		}
+		return index;
+	}
+	
+	
+	
+	public static String illegalCharFixer(String str) {
+		char chr;
+		String result = "";
+		for(int p = 0; p < str.length(); p++) {
+			if(IVIagParser.ILLEGAL_CHARS.indexOf((chr = str.charAt(p))) < 0) {
+				result += chr;
+			}
+		}
+		return result;
 	}
 }
