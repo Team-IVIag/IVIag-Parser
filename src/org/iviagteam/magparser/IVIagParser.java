@@ -12,8 +12,8 @@ import org.jsoup.select.Elements;
 
 public abstract class IVIagParser extends Thread{
 	
-	public final String VERSION = "2.0";
-	public final int VERSION_CODE = 2;
+	public static final String VERSION = "2.1";
+	public static final int VERSION_CODE = 3;
 	public final String TAG = "[IVIagParser]";
 
 	public final String USER_AGENT_TOKEN = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.111 Safari/537.36";
