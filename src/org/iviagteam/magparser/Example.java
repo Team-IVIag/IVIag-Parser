@@ -24,7 +24,7 @@ public class Example {
 		}).start();
 		
 		System.out.println("========== Search test REQUESTED");
-		Thread.sleep(5000);
+		Thread.sleep(5000); //Async wait...
 		
 		//Manga volume parse test
 		new MaruVolumeParser("http://marumaru.in/b/manga/64026", new MaruVolumeCallback() {
@@ -38,7 +38,7 @@ public class Example {
 		}).start();
 		
 		System.out.println("========== Manga volume parsing test REQUESTED");
-		Thread.sleep(5000);
+		Thread.sleep(5000); //Async wait...
 		
 		//Manga parse test
 		new MaruMangaParser("http://www.shencomics.com/archives/571592", new MaruMangaCallback() {
@@ -52,6 +52,15 @@ public class Example {
 		}).start();
 		
 		System.out.println("========== Manga parsing test REQUESTED");
+		Thread.sleep(5000); //Async wait...
+		
+		System.out.println("========== Cookie cache test START");
+		String cookie = IVIagParser.getCookieCache(); //cookie get
+		System.out.println("Cookie cache: " + cookie);
+		try {
+			IVIagParser.setCookieCache(cookie); //cookie set
+		} catch (Exception e) {} //When this is not instance of cookie
+		System.out.println("========== Cookie cache test FINISH");
 	}
 	
 	//Example
