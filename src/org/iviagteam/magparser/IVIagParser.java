@@ -2,19 +2,18 @@ package org.iviagteam.magparser;
 
 import java.util.ArrayList;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.mozilla.javascript.Script;
+import org.mozilla.javascript.Scriptable;
 
 public abstract class IVIagParser extends Thread{
 	
 	public static final String VERSION = "2.1";
 	public static final int VERSION_CODE = 3;
 	public final String TAG = "[IVIagParser]";
+	public final static String DETOUR_TAG = "detour_cloud_proxy";
 
 	public final String USER_AGENT_TOKEN = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.111 Safari/537.36";
 	public final String REFERRER_PAGE = "http://www.google.com";
@@ -80,29 +79,62 @@ public abstract class IVIagParser extends Thread{
 	protected boolean detourCloudProxy(Document doc) {
 		System.out.println(TAG + " Try detour CloudProxy...");
 		
+		String code = "var document = {};"
+				+ "var location = {reload: function(){"
+				+ "org.iviagteam.magparser.IVIagParser.CLOUD_PROXY_COOKIE[0] = document.cookie.toString().split('=')[0];"
+				+ "org.iviagteam.magparser.IVIagParser.CLOUD_PROXY_COOKIE[1] = document.cookie.toString().split('=')[1];"
+			+ "}};"
+			+ doc.getElementsByTag("script").get(0).data() + ";"
+			+ "java.lang.System.out.println('[JavaScriptEngine] Cookie: ' + document.cookie);";
+		
+		try {
+			org.mozilla.javascript.Context ctx = org.mozilla.javascript.Context.enter();
+			ctx.setOptimizationLevel(-1);
+	        ctx.setLanguageVersion(org.mozilla.javascript.Context.VERSION_1_7);
+			Script script = ctx.compileString(code, IVIagParser.DETOUR_TAG, 0, null);
+			Scriptable scope = ctx.initStandardObjects();
+			script.exec(ctx, scope);
+		}catch(Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		/*
 		try {
 			ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("JavaScript");
 			scriptEngine.eval(
-					"var document = {};"
-					+ "var location = {reload: function(){"
-						+ "org.iviagteam.magparser.IVIagParser.CLOUD_PROXY_COOKIE[0] = document.cookie.toString().split('=')[0];"
-						+ "org.iviagteam.magparser.IVIagParser.CLOUD_PROXY_COOKIE[1] = document.cookie.toString().split('=')[1];"
-					+ "}};"
-					+ doc.getElementsByTag("script").get(0).data() + ";"
-					+ "print('[JavaScriptEngine] Cookie: ' + document.cookie);"
+					
 					);
 		} catch (ScriptException e) {
 			e.printStackTrace();
 			System.out.println(TAG + " Fail to eval script");
 			return false;
 		}
+		*/
 		
 		return true;
 	}
 	
 	
 	
-	protected ArrayList<Integer> illegalCharIndex(String str) {
+	public static String getCookieCache() {
+		return IVIagParser.CLOUD_PROXY_COOKIE[0] + "=" + IVIagParser.CLOUD_PROXY_COOKIE[1];
+	}
+	
+	
+	
+	public static void setCookieCache(String cache) throws Exception {
+		String[] cookie = cache.split("=");
+		if(cookie.length < 2) {
+			throw new Exception("This is not instance of cookie");
+		}
+		IVIagParser.CLOUD_PROXY_COOKIE[0] = cookie[0];
+		IVIagParser.CLOUD_PROXY_COOKIE[1] = cookie[1];
+	}
+	
+	
+	
+	protected static ArrayList<Integer> illegalCharIndex(String str) {
 		ArrayList<Integer> index =  new ArrayList<>();
 		for(int p = 0; p < str.length(); p++) {
 			if(ILLEGAL_CHARS.indexOf(str.charAt(p)) >= 0) {
