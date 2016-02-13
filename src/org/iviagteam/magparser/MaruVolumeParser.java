@@ -12,8 +12,6 @@ import org.jsoup.select.Elements;
 
 public class MaruVolumeParser extends VolumeParser{
 
-	enum Status{IDLE, CONNECTING, TITLE_PARSING, IMG_PARSING, VOLUME_PARSING, DONE};
-	
 	public static final String VOLUME_IMG_TAG = "{%img}";
 	
 	private Status status = Status.IDLE;

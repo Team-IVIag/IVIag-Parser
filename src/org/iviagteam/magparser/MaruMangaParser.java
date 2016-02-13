@@ -9,8 +9,6 @@ import org.jsoup.select.Elements;
 
 public class MaruMangaParser extends MangaParser {
 
-	enum Status{IDLE, CONNECTING, DETOUR, PARSING, DONE};
-	
 	private Status status = Status.IDLE;
 	private String url;
 	private MaruMangaCallback callback;

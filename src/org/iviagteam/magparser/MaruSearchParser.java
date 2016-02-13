@@ -12,8 +12,6 @@ import org.jsoup.select.Elements;
 
 public class MaruSearchParser extends SearchParser{
 	
-	enum Status{IDLE, CONNECTING, PARSING, DONE};
-	
 	private Status status = Status.IDLE;
 	private String key;
 	private MaruSearchCallback callback;
