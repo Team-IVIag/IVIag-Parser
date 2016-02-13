@@ -10,7 +10,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class MaruSearchParser extends IVIagParser{
+public class MaruSearchParser extends SearchParser{
 	
 	enum Status{IDLE, CONNECTING, PARSING, DONE};
 	
@@ -24,6 +24,7 @@ public class MaruSearchParser extends IVIagParser{
 	
 	
 	public MaruSearchParser(String keyword, MaruSearchCallback callback) {
+		super(keyword, callback);
 		this.key = keyword;
 		this.callback = callback;
 	}

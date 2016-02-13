@@ -7,7 +7,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class MaruMangaParser extends IVIagParser {
+public class MaruMangaParser extends MangaParser {
 
 	enum Status{IDLE, CONNECTING, DETOUR, PARSING, DONE};
 	
@@ -18,6 +18,7 @@ public class MaruMangaParser extends IVIagParser {
 	
 	
 	public MaruMangaParser(String url, MaruMangaCallback callback) {
+		super(url, callback);
 		this.url = url;
 		this.callback = callback;
 	}

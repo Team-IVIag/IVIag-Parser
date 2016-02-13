@@ -10,9 +10,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class MaruVolumeParser extends IVIagParser{
+public class MaruVolumeParser extends VolumeParser{
 
-	enum Status{IDLE, CONNECTING, IMG_PARSING, VOLUME_PARSING, DONE};
+	enum Status{IDLE, CONNECTING, TITLE_PARSING, IMG_PARSING, VOLUME_PARSING, DONE};
 	
 	public static final String VOLUME_IMG_TAG = "{%img}";
 	
@@ -23,6 +23,7 @@ public class MaruVolumeParser extends IVIagParser{
 	
 	
 	public MaruVolumeParser(String url, MaruVolumeCallback callback) {
+		super(url, callback);
 		this.url = url;
 		this.callback = callback;
 	}
@@ -62,6 +63,9 @@ public class MaruVolumeParser extends IVIagParser{
 			this.callback.callback(null);
 			return;
 		}
+		//Get Title
+		this.status = Status.TITLE_PARSING;
+		list.setTitle(doc.select("#bbsview>.viewbox>.subject>h1").get(0).ownText());
 		
 		//Get Thumbnail
 		this.status = Status.IMG_PARSING;
@@ -107,7 +111,7 @@ public class MaruVolumeParser extends IVIagParser{
 				}
 				
 				//Check repetition
-				int rpIndex = indexOfUrlList(list.getVolumeList(), magUrl);
+				int rpIndex = indexOfUrlList((ArrayList<MaruVolumeUrlWrapper>) list.getVolumeList(), magUrl);
 				if(rpIndex >= 0) {
 					System.out.println(TAG + " This link is repetition (index:" + rpIndex + ") <" + magUrl + "> will be remove");
 					list.getVolumeList().remove(rpIndex);
