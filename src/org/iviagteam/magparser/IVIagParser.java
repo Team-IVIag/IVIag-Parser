@@ -85,7 +85,7 @@ public abstract class IVIagParser extends Thread{
 				+ "org.iviagteam.magparser.IVIagParser.CLOUD_PROXY_COOKIE[1] = document.cookie.toString().split('=')[1];"
 			+ "}};"
 			+ doc.getElementsByTag("script").get(0).data() + ";"
-			+ "java.lang.System.out.println('[JavaScriptEngine] Cookie: ' + document.cookie);";
+			+ "java.lang.System.out.println('[RhinoEngine] Cookie: ' + document.cookie);";
 		
 		try {
 			org.mozilla.javascript.Context ctx = org.mozilla.javascript.Context.enter();

@@ -59,7 +59,7 @@ public class MaruVolumeParser extends IVIagParser{
 			e.printStackTrace();
 			System.out.println(TAG + " Connection error");
 			this.status = null;
-			this.callback.callback(null);
+			this.callback.callback(null, e);
 			return;
 		}
 		
@@ -72,7 +72,7 @@ public class MaruVolumeParser extends IVIagParser{
 				
 				//Check Tag
 				String tag = img.attr("alt");
-				if(!tag.isEmpty() && tag.equals("태그") || tag.equals("페이스북 쉐어 버튼")) { //FIXME: more Exception
+				if(!tag.isEmpty() && tag.equals("태그") || tag.equals("페이스북 쉐어 버튼")) { //NEED more Exception
 					System.out.println(TAG + " Find img tag. Finish find thumbnails.");
 					break;
 				}
@@ -123,7 +123,7 @@ public class MaruVolumeParser extends IVIagParser{
 		}
 		
 		this.status = Status.DONE;
-		this.callback.callback(list);
+		this.callback.callback(list, null);
 	}
 	
 	

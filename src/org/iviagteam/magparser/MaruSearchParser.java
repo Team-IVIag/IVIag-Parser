@@ -58,7 +58,7 @@ public class MaruSearchParser extends IVIagParser{
 			e.printStackTrace();
 			System.out.println(TAG + " Connection error");
 			this.status = null;
-			this.callback.callback(null);
+			this.callback.callback(null, e);
 			return;
 		}
 		
@@ -81,6 +81,6 @@ public class MaruSearchParser extends IVIagParser{
 			}
 		}
 		this.status = Status.DONE;
-		this.callback.callback(urlList);
+		this.callback.callback(urlList, null);
 	}
 }
