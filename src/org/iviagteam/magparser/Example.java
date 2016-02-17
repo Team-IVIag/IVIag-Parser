@@ -1,9 +1,11 @@
 package org.iviagteam.magparser;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 
 import org.iviagteam.magparser.callback.*;
+import org.iviagteam.magparser.exception.FailDetourException;
 import org.iviagteam.magparser.wrapper.*;
 
 public class Example {
@@ -13,46 +15,74 @@ public class Example {
 		System.out.println("IVIagParsing Test Progrem Launched");
 		
 		//Manga search test
-		new MaruSearchParser("던전", new MaruSearchCallback() {
+		MaruSearchParser searchParser = new MaruSearchParser("던전", new MaruSearchCallback() {
 			
 			@Override
-			public void callback(ArrayList<MaruSearchWrapper> list) {
-				// TODO Auto-generated method stub
+			public void callback(ArrayList<MaruSearchWrapper> list, Exception whenError) {
+				if(whenError != null) {
+					System.out.println("Search test: FAIL CONNECT >> " + whenError.toString());
+					return;
+				}
 				printMaruSearch(list);
 				System.out.println("========== Search test FINISH");
 			}
-		}).start();
+		});
+		searchParser.start();
 		
 		System.out.println("========== Search test REQUESTED");
-		Thread.sleep(5000); //Async wait...
+		while(searchParser.getStatus() != null && searchParser.getStatus() != MaruSearchParser.Status.DONE) {
+			Thread.sleep(100); //Async wait...
+		}
 		
 		//Manga volume parse test
-		new MaruVolumeParser("http://marumaru.in/b/manga/64026", new MaruVolumeCallback() {
+		MaruVolumeParser volumeParser = new MaruVolumeParser("http://marumaru.in/b/manga/64026", new MaruVolumeCallback() {
 
 			@Override
-			public void callback(MaruVolumeWrapper result) {
-				// TODO Auto-generated method stub
+			public void callback(MaruVolumeWrapper result, Exception whenError) {
+				if(whenError != null) {
+					if(whenError instanceof MalformedURLException) {
+						System.out.println("Manga volume test: WRONG URL >> " + whenError.toString());
+					}else {
+						System.out.println("Manga volume test: FAIL CONNECT >> " + whenError.toString());
+					}
+					return;
+				}
 				printMaruVolume(result);
 				System.out.println("========== Manga volume parsing test FINISH");
 			}
-		}).start();
+		});
+		volumeParser.start();
 		
 		System.out.println("========== Manga volume parsing test REQUESTED");
-		Thread.sleep(5000); //Async wait...
+		while(volumeParser.getStatus() != null && volumeParser.getStatus() != MaruVolumeParser.Status.DONE) {
+			Thread.sleep(100); //Async wait...
+		}
 		
 		//Manga parse test
-		new MaruMangaParser("http://www.shencomics.com/archives/571592", new MaruMangaCallback() {
+		MaruMangaParser mangaParser = new MaruMangaParser("http://www.shencomics.com/archives/571592", new MaruMangaCallback() {
 			
 			@Override
-			public void callback(MaruMangaWrapper result) {
-				// TODO Auto-generated method stub
+			public void callback(MaruMangaWrapper result, Exception whenError) {
+				if(whenError != null) {
+					if(whenError instanceof FailDetourException) {
+						System.out.println("Manga parsing test: FAIL TO DETOUR CLOUDPROXY >> " + whenError.toString());
+					}else if(whenError instanceof MalformedURLException) {
+						System.out.println("Manga parsing test: WRONG URL >> " + whenError.toString());
+					}else {
+						System.out.println("Manga parsing test: FAIL CONNECT >> " + whenError.toString());
+					}
+					return;
+				}
 				printMaruManga(result);
 				System.out.println("========== Manga parsing test FINISH");
 			}
-		}).start();
+		});
+		mangaParser.start();
 		
 		System.out.println("========== Manga parsing test REQUESTED");
-		Thread.sleep(5000); //Async wait...
+		while(mangaParser.getStatus() != null && mangaParser.getStatus() != MaruMangaParser.Status.DONE) {
+			Thread.sleep(100); //Async wait...
+		}
 		
 		System.out.println("========== Cookie cache test START");
 		String cookie = IVIagParser.getCookieCache(); //cookie get

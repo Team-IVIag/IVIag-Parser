@@ -5,5 +5,5 @@ import java.util.ArrayList;
 import org.iviagteam.magparser.wrapper.MaruSearchWrapper;
 
 public interface SearchCallback extends ParserCallback{
-	void callback(ArrayList<MaruSearchWrapper> result);
+	void callback(ArrayList<MaruSearchWrapper> result, Exception e);
 }

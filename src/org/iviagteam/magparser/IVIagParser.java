@@ -15,7 +15,7 @@ public abstract class IVIagParser extends Thread{
 	public final String TAG = "[IVIagParser]";
 	public final static String DETOUR_TAG = "detour_cloud_proxy";
 
-	public final String USER_AGENT_TOKEN = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.111 Safari/537.36";
+	public final String USER_AGENT_TOKEN = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.109 Safari/537.36";
 	public final String REFERRER_PAGE = "http://www.google.com";
 	
 	public final String VOLUME_PREFIX = "http://www";
@@ -85,7 +85,7 @@ public abstract class IVIagParser extends Thread{
 				+ "org.iviagteam.magparser.IVIagParser.CLOUD_PROXY_COOKIE[1] = document.cookie.toString().split('=')[1];"
 			+ "}};"
 			+ doc.getElementsByTag("script").get(0).data() + ";"
-			+ "java.lang.System.out.println('[JavaScriptEngine] Cookie: ' + document.cookie);";
+			+ "java.lang.System.out.println('[RhinoEngine] Cookie: ' + document.cookie);";
 		
 		try {
 			org.mozilla.javascript.Context ctx = org.mozilla.javascript.Context.enter();

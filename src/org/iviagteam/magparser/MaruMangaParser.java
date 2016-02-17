@@ -1,6 +1,7 @@
 package org.iviagteam.magparser;
 
 import org.iviagteam.magparser.callback.MaruMangaCallback;
+import org.iviagteam.magparser.exception.FailDetourException;
 import org.iviagteam.magparser.wrapper.MaruMangaWrapper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -68,7 +69,7 @@ public class MaruMangaParser extends MangaParser {
 			e.printStackTrace();
 			System.out.println(TAG + " Connection error");
 			this.status = null;
-			this.callback.callback(null);
+			this.callback.callback(null, e);
 			return;
 		}
 		
@@ -78,7 +79,7 @@ public class MaruMangaParser extends MangaParser {
 			if(repeat) {
 				System.out.println(TAG + " Fail detour CloudProxy.");
 				this.status = null;
-				this.callback.callback(null);
+				this.callback.callback(null, new FailDetourException("Unknown cookie type"));
 				return;
 			}
 			
@@ -88,7 +89,7 @@ public class MaruMangaParser extends MangaParser {
 				this.parsing(url, true);
 			}else {
 				this.status = null;
-				this.callback.callback(null);
+				this.callback.callback(null, new FailDetourException("Fail to detour CloudProxy"));
 			}
 			return;
 		}
@@ -126,6 +127,6 @@ public class MaruMangaParser extends MangaParser {
 		}
 		
 		this.status = Status.DONE;
-		this.callback.callback(list);
+		this.callback.callback(list, null);
 	}
 }
