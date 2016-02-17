@@ -9,7 +9,7 @@ public class DefaultLogger extends Logger{
 	
 	@Override
 	public void log(String str, String tag, EnumLogType t) {
-		System.out.println(getLogString(tag, str));
+		System.out.println(getLogString(str, tag));
 	}
 	
 	public static DefaultLogger getInstance(){

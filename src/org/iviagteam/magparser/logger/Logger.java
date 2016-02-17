@@ -3,7 +3,7 @@ package org.iviagteam.magparser.logger;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.Date;
 
 public abstract class Logger{
 	public final SimpleDateFormat format;
@@ -13,7 +13,7 @@ public abstract class Logger{
 	}
 	
 	public String getLogString(String str, String tag){
-		return format.format(Calendar.getInstance()) + tag + str;
+		return format.format(new Date()) + tag + str;
 	}
 	
 	public String getStackTrace(Throwable e){
