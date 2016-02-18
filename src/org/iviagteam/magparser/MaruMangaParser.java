@@ -10,6 +10,7 @@ import org.jsoup.select.Elements;
 
 public class MaruMangaParser extends MangaParser {
 
+	public static final String TAG = "MaruMangaParser";
 	private Status status = Status.IDLE;
 	private String url;
 	private MaruMangaCallback callback;
@@ -59,11 +60,11 @@ public class MaruMangaParser extends MangaParser {
 			System.out.println(TAG + " Try to connect '" + url + "'...");
 
 			doc = Jsoup.connect(url)
-					.userAgent(USER_AGENT_TOKEN)
+					.userAgent(IVIagParser.USER_AGENT_TOKEN)
 					.followRedirects(true)
-					.referrer(REFERRER_PAGE)
-					.timeout(30000)
-					.cookie(IVIagParser.CLOUD_PROXY_COOKIE[0], IVIagParser.CLOUD_PROXY_COOKIE[1])
+					.referrer(IVIagParser.REFERRER_PAGE)
+					.timeout(IVIagParser.TIME_OUT)
+					.cookies(IVIagParser.getCookies())
 					.get();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -85,7 +86,7 @@ public class MaruMangaParser extends MangaParser {
 			
 			//Try detour
 			this.status = Status.DETOUR;
-			if(detourCloudProxy(doc)) {
+			if(IVIagParser.detourCloudProxy(doc)) {
 				this.parsing(url, true);
 			}else {
 				this.status = null;
@@ -98,7 +99,7 @@ public class MaruMangaParser extends MangaParser {
 		this.status = Status.PARSING;
 		Elements title = doc.select("#content .entry-title");
 		try {
-			String titleStr = getOwnText(title.get(0));
+			String titleStr = IVIagParser.getOwnText(title.get(0));
 			list = new MaruMangaWrapper(titleStr);
 			System.out.println(TAG + " Title parsing success: " + titleStr);
 		} catch (Exception e) {

@@ -12,6 +12,7 @@ import org.jsoup.select.Elements;
 
 public class MaruSearchParser extends SearchParser{
 	
+	public static final String TAG = "MaruSearchParser";
 	private Status status = Status.IDLE;
 	private String key;
 	private MaruSearchCallback callback;
@@ -48,10 +49,11 @@ public class MaruSearchParser extends SearchParser{
 		try {
 			System.out.println(TAG + " try to connect '" + url + "'...");
 			doc = Jsoup.connect(url)
-					.userAgent(USER_AGENT_TOKEN)
+					.userAgent(IVIagParser.USER_AGENT_TOKEN)
 					.followRedirects(true)
-					.referrer(REFERRER_PAGE)
-					.timeout(30000)
+					.referrer(IVIagParser.REFERRER_PAGE)
+					.timeout(IVIagParser.TIME_OUT)
+					.cookies(IVIagParser.getCookies())
 					.get();
 		} catch (IOException e) {
 			e.printStackTrace();
