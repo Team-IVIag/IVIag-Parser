@@ -12,6 +12,8 @@ import org.jsoup.select.Elements;
 
 public class MaruVolumeParser extends VolumeParser{
 
+	public static final String TAG = "MaruVolumeParser";
+	public static final String VOLUME_PREFIX = "http://www";
 	public static final String VOLUME_IMG_TAG = "{%img}";
 	
 	private Status status = Status.IDLE;
@@ -48,11 +50,12 @@ public class MaruVolumeParser extends VolumeParser{
 		try {
 			this.status = Status.CONNECTING;
 			System.out.println(TAG + " Try to connect '" + this.url + "'...");
-			doc = Jsoup.connect(this.url)
-					.userAgent(USER_AGENT_TOKEN)
+			doc = Jsoup.connect(url)
+					.userAgent(IVIagParser.USER_AGENT_TOKEN)
 					.followRedirects(true)
-					.referrer(REFERRER_PAGE)
-					.timeout(30000)
+					.referrer(IVIagParser.REFERRER_PAGE)
+					.timeout(IVIagParser.TIME_OUT)
+					.cookies(IVIagParser.getCookies())
 					.get();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -101,7 +104,7 @@ public class MaruVolumeParser extends VolumeParser{
 				if(ele.ownText().length() > 0) {
 					magTitle = ele.ownText();
 				}else {
-					magTitle = getOwnText(ele);
+					magTitle = IVIagParser.getOwnText(ele);
 					
 					if(magTitle == null) {
 						magTitle = "undefined";

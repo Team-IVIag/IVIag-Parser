@@ -1,8 +1,10 @@
 package org.iviagteam.magparser;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 
-import org.iviagteam.magparser.callback.ParserLogCallback;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -14,33 +16,25 @@ import org.mozilla.javascript.Scriptable;
  * 
  * @author SemteulGaram, Khinenw
  * @since 2016.02.06~2016.02.16
- * @version 2.4
+ * @version 3.0
  */
 
-public abstract class IVIagParser extends Thread{
+public abstract class IVIagParser{
 	
-	public static final String VERSION = "2.4";
-	public static final int VERSION_CODE = 6;
+	public static final String VERSION = "3.0";
+	public static final int VERSION_CODE = 7;
 	public static final String TAG = "IVIagParser";
-	public static final String DETOUR_TAG = "IVIagParser::detourProxy";
+	public static final String DETOUR_TAG = "IVIagParser::DetourProxy";
 
-	public final String USER_AGENT_TOKEN = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.109 Safari/537.36";
-	public final String REFERRER_PAGE = "http://marumaru.in";
-	public final String VOLUME_PREFIX = "http://www";
-	public final String MAG_TITLE_TAG = "{%title}";
+	public static final String USER_AGENT_TOKEN = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.109 Safari/537.36";
+	public static final String REFERRER_PAGE = "http://marumaru.in";
+	public static final int TIME_OUT = 30000; //Need more? :[
+	
+	
+	public static final String MAG_TITLE_TAG = "{%title}";
 	public static final String ILLEGAL_CHARS = "\\/:?\"*<>|";
 	
-	public static String[] CLOUD_PROXY_COOKIE = new String[] {"sucuri_cloudproxy_uuid_000000000", "00000000000000000000000000000000"};
-	//Default log calback.
-	//You can change logger use 'IVIagParser.setLogger(ParserLogCallback callback);'
-	private static ParserLogCallback logCallback = new ParserLogCallback(){
-		@Override
-		public void onLog(String tag, String msg) {
-			System.out.println("[" + tag + "]" + msg);
-		}
-	};
-	
-	
+	private static HashMap<String, String> CLOUD_PROXY_COOKIE = new HashMap<>();
 	
 	@SuppressWarnings("rawtypes")
 	public Enum getStatus() {
@@ -49,13 +43,13 @@ public abstract class IVIagParser extends Thread{
 	
 	
 	
-	protected String getOwnText(Element ele) throws Exception {
-		return this.getOwnText(ele, 0);
+	protected static String getOwnText(Element ele) throws Exception {
+		return IVIagParser.getOwnText(ele, 0);
 	}
 	
 	
 	
-	protected String getOwnText(Element ele, int repeat) throws Exception {
+	protected static String getOwnText(Element ele, int repeat) throws Exception {
 		if(repeat > 128) {
 			throw new Exception("getOwnText too many recursive function");
 		}
@@ -66,7 +60,7 @@ public abstract class IVIagParser extends Thread{
 			Elements eles = ele.children();
 			String ownText = null;
 			for(int p = 0; p < eles.size(); p++) {
-				if((ownText = this.getOwnText(eles.get(p), repeat + 1)) != null) {
+				if((ownText = IVIagParser.getOwnText(eles.get(p), repeat + 1)) != null) {
 					break;
 				}
 			}
@@ -78,7 +72,7 @@ public abstract class IVIagParser extends Thread{
 	
 	
 	
-	protected String stringToCode(String str) {
+	protected static String stringToCode(String str) {
 		String codes = "";
 		for(int p = 0; p < str.length(); p++) {
 			codes += (int) str.charAt(p) + " ";
@@ -88,13 +82,13 @@ public abstract class IVIagParser extends Thread{
 	
 	
 	
-	protected boolean detourCloudProxy(Document doc) {
-		System.out.println(DETOUR_TAG + " Try detour CloudProxy...");
+	protected static boolean detourCloudProxy(Document doc) {
+		System.out.println(TAG + " Try detour CloudProxy...");
 		
 		String code = "var document = {};"
 				+ "var location = {reload: function(){"
-				+ "org.iviagteam.magparser.IVIagParser.CLOUD_PROXY_COOKIE[0] = document.cookie.toString().split('=')[0];"
-				+ "org.iviagteam.magparser.IVIagParser.CLOUD_PROXY_COOKIE[1] = document.cookie.toString().split('=')[1];"
+				+ "var cookie = document.cookie.toString().split('=');"
+				+ "org.iviagteam.magparser.IVIagParser.getCookies().put(cookie[0], cookie[1]);"
 			+ "}};"
 			+ doc.getElementsByTag("script").get(0).data() + ";"
 			+ "java.lang.System.out.println('[RhinoEngine] Cookie: ' + document.cookie);";
@@ -116,19 +110,42 @@ public abstract class IVIagParser extends Thread{
 	
 	
 	
-	public static String getCookieCache() {
-		return IVIagParser.CLOUD_PROXY_COOKIE[0] + "=" + IVIagParser.CLOUD_PROXY_COOKIE[1];
+	public static HashMap<String, String> getCookies() {
+		return IVIagParser.CLOUD_PROXY_COOKIE;
 	}
 	
 	
 	
-	public static void setCookieCache(String cache) throws Exception {
-		String[] cookie = cache.split("=");
-		if(cookie.length < 2) {
-			throw new Exception("This is not instance of cookie");
+	public static void setCookies(final HashMap<String, String> map) throws Exception {
+		IVIagParser.CLOUD_PROXY_COOKIE = map;
+	}
+	
+	
+	
+	public static String cookieStringify(HashMap<String, String> map) {
+		String result = "";
+		final Set<String> set = map.keySet();
+		String key;
+		for(final Iterator<String> iterator = set.iterator(); iterator.hasNext();) {
+			key = iterator.next();
+			if(!result.isEmpty()) {
+				result += ";";
+			}
+			result += key + "=" + map.get(key);
 		}
-		IVIagParser.CLOUD_PROXY_COOKIE[0] = cookie[0];
-		IVIagParser.CLOUD_PROXY_COOKIE[1] = cookie[1];
+		return result;
+	}
+	
+	
+	
+	public static HashMap<String, String> cookieParsing(String cookieStr) {
+		final HashMap<String, String> result = new HashMap<>();
+		final String[] cookies = cookieStr.split(";");
+		for(String cookie : cookies) {
+			String[] set = cookie.split("=");
+			result.put(set[0], set[1]);
+		}
+		return result;
 	}
 	
 	
@@ -168,14 +185,4 @@ public abstract class IVIagParser extends Thread{
 	}
 	
 	
-	
-	public static void setLogger(ParserLogCallback callback) {
-		IVIagParser.logCallback = callback;
-	}
-	
-	
-	
-	protected static void log(String tag, String msg) {
-		IVIagParser.logCallback.onLog(tag, msg);
-	}
 }
