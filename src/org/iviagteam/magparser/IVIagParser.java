@@ -2,27 +2,45 @@ package org.iviagteam.magparser;
 
 import java.util.ArrayList;
 
+import org.iviagteam.magparser.callback.ParserLogCallback;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.mozilla.javascript.Script;
 import org.mozilla.javascript.Scriptable;
 
+/**
+ * IVIagParser JAVA
+ * 
+ * @author SemteulGaram, Khinenw
+ * @since 2016.02.06~2016.02.16
+ * @version 2.4
+ */
+
 public abstract class IVIagParser extends Thread{
 	
-	public static final String VERSION = "2.1";
-	public static final int VERSION_CODE = 3;
-	public final String TAG = "[IVIagParser]";
-	public final static String DETOUR_TAG = "detour_cloud_proxy";
+	public static final String VERSION = "2.4";
+	public static final int VERSION_CODE = 6;
+	public static final String TAG = "IVIagParser";
+	public static final String DETOUR_TAG = "IVIagParser::detourProxy";
 
 	public final String USER_AGENT_TOKEN = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.109 Safari/537.36";
-	public final String REFERRER_PAGE = "http://www.marumaru.in";
-	
+	public final String REFERRER_PAGE = "http://marumaru.in";
 	public final String VOLUME_PREFIX = "http://www";
 	public final String MAG_TITLE_TAG = "{%title}";
-	public final static String ILLEGAL_CHARS = "\\/:?\"*<>|";
+	public static final String ILLEGAL_CHARS = "\\/:?\"*<>|";
 	
 	public static String[] CLOUD_PROXY_COOKIE = new String[] {"sucuri_cloudproxy_uuid_000000000", "00000000000000000000000000000000"};
+	//Default log calback.
+	//You can change logger use 'IVIagParser.setLogger(ParserLogCallback callback);'
+	private static ParserLogCallback logCallback = new ParserLogCallback(){
+		@Override
+		public void onLog(String tag, String msg) {
+			System.out.println("[" + tag + "]" + msg);
+		}
+	};
+	
+	
 	
 	@SuppressWarnings("rawtypes")
 	public Enum getStatus() {
@@ -39,7 +57,7 @@ public abstract class IVIagParser extends Thread{
 	
 	protected String getOwnText(Element ele, int repeat) throws Exception {
 		if(repeat > 128) {
-			throw new Exception(TAG + " getOwnText too many recursive function");
+			throw new Exception("getOwnText too many recursive function");
 		}
 		
 		if(ele.ownText().length() > 0) {
@@ -60,12 +78,6 @@ public abstract class IVIagParser extends Thread{
 	
 	
 	
-	protected String getUrl(Element ele, int repeat) {
-		return "a";
-	}
-	
-	
-	
 	protected String stringToCode(String str) {
 		String codes = "";
 		for(int p = 0; p < str.length(); p++) {
@@ -77,7 +89,7 @@ public abstract class IVIagParser extends Thread{
 	
 	
 	protected boolean detourCloudProxy(Document doc) {
-		System.out.println(TAG + " Try detour CloudProxy...");
+		System.out.println(DETOUR_TAG + " Try detour CloudProxy...");
 		
 		String code = "var document = {};"
 				+ "var location = {reload: function(){"
@@ -98,19 +110,6 @@ public abstract class IVIagParser extends Thread{
 			e.printStackTrace();
 			return false;
 		}
-		
-		/*
-		try {
-			ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("JavaScript");
-			scriptEngine.eval(
-					
-					);
-		} catch (ScriptException e) {
-			e.printStackTrace();
-			System.out.println(TAG + " Fail to eval script");
-			return false;
-		}
-		*/
 		
 		return true;
 	}
@@ -166,5 +165,17 @@ public abstract class IVIagParser extends Thread{
 		
 		//Check file name is valid
 		return IVIagParser.illegalCharFixer(pageTitle);
+	}
+	
+	
+	
+	public static void setLogger(ParserLogCallback callback) {
+		IVIagParser.logCallback = callback;
+	}
+	
+	
+	
+	protected static void log(String tag, String msg) {
+		IVIagParser.logCallback.onLog(tag, msg);
 	}
 }
