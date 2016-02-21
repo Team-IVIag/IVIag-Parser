@@ -1,6 +1,8 @@
 package org.iviagteam.magparser;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import org.iviagteam.magparser.callback.MaruSearchCallback;
@@ -41,7 +43,13 @@ public class MaruSearchParser extends SearchParser{
 		System.out.println(TAG + " ParseMagSearch - Search request: " + this.key);
 		
 		ArrayList<MaruSearchWrapper> urlList = new ArrayList<>();
-		String url = SEARCH_LINK_SAMPLE.replace("{%k}", this.key);
+		String url;
+		try {
+			url = SEARCH_LINK_SAMPLE.replace("{%k}", URLEncoder.encode(this.key, "UTF-8"));
+		} catch (UnsupportedEncodingException e1) {
+			e1.printStackTrace();
+			return;
+		}
 		Document doc;
 		
 		//Try Connect
@@ -76,7 +84,7 @@ public class MaruSearchParser extends SearchParser{
 				System.out.println(TAG + " Parsing success: " + title);
 			}catch(Exception e) {
 				e.printStackTrace();
-				System.out.println(TAG + " Fail to parseing: " + ele.toString());
+				System.out.println(TAG + " Failed parsing: " + ele.toString());
 			}
 		}
 		this.status = Status.DONE;
