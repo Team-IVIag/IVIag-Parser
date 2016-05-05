@@ -14,6 +14,7 @@ public class MaruVolumeParser extends VolumeParser{
 
 	public static final String TAG = "MaruVolumeParser";
 	public static final String VOLUME_PREFIX = "http://www";
+	public static final String CF_PATCH_VOLUME_PREFIX = "http://shencomics.com/archives/";
 	public static final String VOLUME_IMG_TAG = "{%img}";
 	
 	private Status status = Status.IDLE;
@@ -93,12 +94,24 @@ public class MaruVolumeParser extends VolumeParser{
 		}
 		
 		this.status = Status.VOLUME_PARSING;
-		Elements magList = doc.select("#vContent a[href^=" + VOLUME_PREFIX + "]");
+		Elements magList = doc.select("#vContent a[href^=" + VOLUME_PREFIX + "], #vContent span");
 		
 		for(Element ele : magList) {
 			try {
 				String magTitle;
 				String magUrl = ele.attr("href");
+				
+				if(ele.tagName().toLowerCase() == "span"){
+					if(!ele.hasAttr("cf-patch")) continue;
+					
+					String patch = ele.attr("cf-patch");
+					String lastChar = String.valueOf(patch.charAt(patch.length() - 1));
+					
+					patch = patch.replace(lastChar, "").replaceFirst("^0x0*", "");
+					
+					int mangaId = (int) (Integer.parseInt(patch, 16) / Math.pow(2, Integer.parseInt(lastChar, 16) / 2));
+					magUrl = CF_PATCH_VOLUME_PREFIX + mangaId;
+				}
 				
 				//Manga title search
 				if(ele.ownText().length() > 0) {
