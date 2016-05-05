@@ -28,8 +28,6 @@ public abstract class IVIagParser{
 	public static final String USER_AGENT_TOKEN = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.109 Safari/537.36";
 	public static final String REFERRER_PAGE = "http://marumaru.in";
 	public static final int TIME_OUT = 30000; //Need more? :[
-	public final String MAG_TITLE_TAG = "{%title}";
-	public static final String ILLEGAL_CHARS = "\\/:?\"*<>|";
 	
 	
 	public static final String MAG_TITLE_TAG = "{%title}";
