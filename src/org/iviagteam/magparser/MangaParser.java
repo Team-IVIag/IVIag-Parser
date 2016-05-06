@@ -8,4 +8,8 @@ public class MangaParser extends Thread{
 	public MangaParser(String url, MangaCallback callback) {
 		
 	}
+
+	public Status getStatus() {
+		return null;
+	}
 }
