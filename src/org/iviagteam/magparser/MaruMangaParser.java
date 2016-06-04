@@ -114,9 +114,13 @@ public class MaruMangaParser extends MangaParser {
 		for(Element page : pages) {
 			try {
 				//LazyLoad Check
-				String pageUrl = page.attr("data-lazy-src");
+				String pageUrl = page.attr("ks-token");
 				if(pageUrl.equals("")) {
-					pageUrl = (page.attr("src").equals("") ? page.attr("data-src") : page.attr("src"));	
+					pageUrl = page.attr("data-lazy-src");
+				}
+				
+				if(pageUrl.equals("")) {
+					pageUrl = page.attr("src");
 				}
 				
 				list.addPage(pageUrl);
