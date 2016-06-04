@@ -109,19 +109,16 @@ public class MaruMangaParser extends MangaParser {
 		}
 		
 		//Manga parsing
-		Elements pages = doc.select("#content img[src~=(?i)\\.(png|jpe?g|gif|bmp)]");
+		Elements pages = doc.select("#content img[ks-token], #content img[data-src], #content img[data-lazy-src], #content img[src~=(?i)\\.(png|jpe?g|gif|bmp)]");
 		System.out.println(TAG + " Page find: " + pages.size());
 		for(Element page : pages) {
 			try {
 				//LazyLoad Check
-				String pageUrl = page.attr("ks-token");
-				if(pageUrl.equals("")) {
-					pageUrl = page.attr("data-lazy-src");
-				}
-				
-				if(pageUrl.equals("")) {
-					pageUrl = page.attr("src");
-				}
+				String pageUrl = "";
+				if(page.hasAttr("ks-token")) pageUrl = page.attr("ks-token");
+				else if(page.hasAttr("data-lazy-src")) pageUrl = page.attr("data-lazy-src");
+				else if(page.hasAttr("data-src")) pageUrl = page.attr("data-src");
+				else pageUrl = page.attr("src");
 				
 				list.addPage(pageUrl);
 				System.out.println(TAG + " Page parsing Success: " + pageUrl);
