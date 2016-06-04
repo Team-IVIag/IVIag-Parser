@@ -116,7 +116,7 @@ public class MaruMangaParser extends MangaParser {
 				//LazyLoad Check
 				String pageUrl = page.attr("data-lazy-src");
 				if(pageUrl.equals("")) {
-					pageUrl = page.attr("src");	
+					pageUrl = (page.attr("src").equals("") ? page.attr("data-src") : page.attr("src"));	
 				}
 				
 				list.addPage(pageUrl);
