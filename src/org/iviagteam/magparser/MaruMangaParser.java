@@ -1,5 +1,11 @@
 package org.iviagteam.magparser;
 
+import com.gargoylesoftware.htmlunit.BrowserVersion;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.DomElement;
+import com.gargoylesoftware.htmlunit.html.DomNodeList;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import org.iviagteam.magparser.callback.MaruMangaCallback;
 import org.iviagteam.magparser.exception.FailDetourException;
 import org.iviagteam.magparser.wrapper.MaruMangaWrapper;
@@ -8,9 +14,11 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.util.List;
+
 public class MaruMangaParser extends IVIagParser {
 
-	enum Status{IDLE, CONNECTING, DETOUR, PARSING, DONE};
+	enum Status{IDLE, CONNECTING, PARSING, DONE, ERROR};
 	
 	private Status status = Status.IDLE;
 	private String url;
@@ -41,12 +49,50 @@ public class MaruMangaParser extends IVIagParser {
 	private void parsing() {
 		System.out.println(TAG + " ParseMag - Parsing Manga request: " + this.url);
 		
-		parsing(url, false);
+		parsing2(url);
 	}
 	
 	
 	
+	private void parsing2(String url) {
+
+		if(url.startsWith("https")) url.replaceFirst("https", "http");
+
+		try {
+			this.status = Status.CONNECTING;
+			IVIagParser.log(TAG, "Imitating Chrome...");
+			final WebClient webClient = new WebClient(BrowserVersion.CHROME);
+
+			this.status = Status.PARSING;
+			IVIagParser.log(TAG, "Connecting...: " + url);
+			final HtmlPage htmlPage = webClient.getPage(url);
+
+			String title;
+			try {
+				title = ((HtmlElement) htmlPage.getElementById("content")).getElementsByAttribute("h1", "class", "entry-title").get(0).getTextContent();
+			}catch(Exception e) {
+				title = htmlPage.getTitleText().substring(0, htmlPage.getTitleText().indexOf("|")-1);
+			}
+			IVIagParser.log(TAG, "Parsing...: " + title);
+			MaruMangaWrapper wrapper = new MaruMangaWrapper(title);
+			DomNodeList<HtmlElement> list = htmlPage.getElementById("content").getElementsByTagName("img");
+			for(HtmlElement element : list) {
+				IVIagParser.log(TAG, "Parsed page: " + element.getAttribute("src"));
+				wrapper.addPage(element.getAttribute("src"));
+			}
+			webClient.close();
+			this.status = Status.DONE;
+			this.callback.callback(wrapper, null);
+		} catch (Exception e) {
+			this.status = Status.ERROR;
+			this.callback.callback(null, e);
+		}
+
+	}
+
+	/*
 	private void parsing(String url, Boolean repeat) {
+
 		
 		//init
 		MaruMangaWrapper list;
@@ -130,4 +176,5 @@ public class MaruMangaParser extends IVIagParser {
 		this.status = Status.DONE;
 		this.callback.callback(list, null);
 	}
+	*/
 }

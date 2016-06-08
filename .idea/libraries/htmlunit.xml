@@ -1,0 +1,29 @@
+<component name="libraryTable">
+  <library name="htmlunit">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/commons-codec-1.10.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/websocket-api-9.2.17.v20160517.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/commons-lang3-3.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/htmlunit-2.22.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/htmlunit-core-js-2.22.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/commons-logging-1.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/websocket-common-9.2.17.v20160517.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/sac-1.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/cssparser-0.9.19.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jetty-io-9.2.17.v20160517.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/neko-htmlunit-2.21.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/websocket-client-9.2.17.v20160517.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/xml-apis-1.4.01.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/xalan-2.7.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/httpmime-4.5.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/serializer-2.7.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/httpclient-4.5.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/httpcore-4.4.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/commons-io-2.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jetty-util-9.2.17.v20160517.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/xercesImpl-2.11.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

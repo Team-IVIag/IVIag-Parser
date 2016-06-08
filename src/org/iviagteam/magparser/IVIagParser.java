@@ -19,8 +19,8 @@ import org.mozilla.javascript.Scriptable;
 
 public abstract class IVIagParser extends Thread{
 	
-	public static final String VERSION = "2.4";
-	public static final int VERSION_CODE = 6;
+	public static final String VERSION = "3.0";
+	public static final int VERSION_CODE = 7;
 	public static final String TAG = "IVIagParser";
 	public static final String DETOUR_TAG = "IVIagParser::detourProxy";
 
