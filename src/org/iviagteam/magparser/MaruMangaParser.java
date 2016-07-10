@@ -87,7 +87,7 @@ public class MaruMangaParser extends MangaParser {
 			//Try detour
 			this.status = Status.DETOUR;
 			if(IVIagParser.detourCloudProxy(doc)) {
-				this.parsing(url, true);
+				this.parsing(doc.location(), true);
 			}else {
 				this.status = null;
 				this.callback.callback(null, new FailDetourException("Fail to detour CloudProxy"));
