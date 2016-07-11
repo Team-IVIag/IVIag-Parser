@@ -8,18 +8,17 @@ import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import org.iviagteam.magparser.callback.MaruMangaCallback;
 import org.iviagteam.magparser.exception.FailDetourException;
+import org.iviagteam.magparser.logger.DefaultLogger;
 import org.iviagteam.magparser.wrapper.MaruMangaWrapper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.util.List;
+public class MaruMangaParser extends MangaParser {
 
-public class MaruMangaParser extends IVIagParser {
+	public static final String TAG = "MaruMangaParser";
 
-	enum Status{IDLE, CONNECTING, PARSING, DONE, ERROR};
-	
 	private Status status = Status.IDLE;
 	private String url;
 	private MaruMangaCallback callback;
@@ -27,6 +26,7 @@ public class MaruMangaParser extends IVIagParser {
 	
 	
 	public MaruMangaParser(String url, MaruMangaCallback callback) {
+		super(url, callback);
 		this.url = url;
 		this.callback = callback;
 	}
@@ -60,11 +60,11 @@ public class MaruMangaParser extends IVIagParser {
 
 		try {
 			this.status = Status.CONNECTING;
-			IVIagParser.log(TAG, "Imitating Chrome...");
+			DefaultLogger.getInstance().info("Imitating Chrome", TAG);
 			final WebClient webClient = new WebClient(BrowserVersion.CHROME);
 
 			this.status = Status.PARSING;
-			IVIagParser.log(TAG, "Connecting...: " + url);
+			DefaultLogger.getInstance().info("Connecting...: " + url, TAG);
 			final HtmlPage htmlPage = webClient.getPage(url);
 
 			String title;
@@ -73,18 +73,18 @@ public class MaruMangaParser extends IVIagParser {
 			}catch(Exception e) {
 				title = htmlPage.getTitleText().substring(0, htmlPage.getTitleText().indexOf("|")-1);
 			}
-			IVIagParser.log(TAG, "Parsing...: " + title);
+			DefaultLogger.getInstance().info("Parsing...: " + title, TAG);
 			MaruMangaWrapper wrapper = new MaruMangaWrapper(title);
 			DomNodeList<HtmlElement> list = htmlPage.getElementById("content").getElementsByTagName("img");
 			for(HtmlElement element : list) {
-				IVIagParser.log(TAG, "Parsed page: " + element.getAttribute("src"));
+				DefaultLogger.getInstance().debug("Parsed page: " + element.getAttribute("src"), TAG);
 				wrapper.addPage(element.getAttribute("src"));
 			}
 			webClient.close();
 			this.status = Status.DONE;
 			this.callback.callback(wrapper, null);
 		} catch (Exception e) {
-			this.status = Status.ERROR;
+			this.status = null;
 			this.callback.callback(null, e);
 		}
 
@@ -106,11 +106,11 @@ public class MaruMangaParser extends IVIagParser {
 			System.out.println(TAG + " Try to connect '" + url + "'...");
 
 			doc = Jsoup.connect(url)
-					.userAgent(USER_AGENT_TOKEN)
+					.userAgent(IVIagParser.USER_AGENT_TOKEN)
 					.followRedirects(true)
-					.referrer(REFERRER_PAGE)
-					.timeout(30000)
-					.cookie(IVIagParser.CLOUD_PROXY_COOKIE[0], IVIagParser.CLOUD_PROXY_COOKIE[1])
+					.referrer(IVIagParser.REFERRER_PAGE)
+					.timeout(IVIagParser.TIME_OUT)
+					.cookies(IVIagParser.getCookies())
 					.get();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -132,8 +132,8 @@ public class MaruMangaParser extends IVIagParser {
 			
 			//Try detour
 			this.status = Status.DETOUR;
-			if(detourCloudProxy(doc)) {
-				this.parsing(url, true);
+			if(IVIagParser.detourCloudProxy(doc)) {
+				this.parsing(doc.location(), true);
 			}else {
 				this.status = null;
 				this.callback.callback(null, new FailDetourException("Fail to detour CloudProxy"));
@@ -145,7 +145,7 @@ public class MaruMangaParser extends IVIagParser {
 		this.status = Status.PARSING;
 		Elements title = doc.select("#content .entry-title");
 		try {
-			String titleStr = getOwnText(title.get(0));
+			String titleStr = IVIagParser.getOwnText(title.get(0));
 			list = new MaruMangaWrapper(titleStr);
 			System.out.println(TAG + " Title parsing success: " + titleStr);
 		} catch (Exception e) {
@@ -155,15 +155,16 @@ public class MaruMangaParser extends IVIagParser {
 		}
 		
 		//Manga parsing
-		Elements pages = doc.select("#content img[src~=(?i)\\.(png|jpe?g|gif|bmp)]");
+		Elements pages = doc.select("#content img[ks-token], #content img[data-src], #content img[data-lazy-src], #content img[src~=(?i)\\.(png|jpe?g|gif|bmp)]");
 		System.out.println(TAG + " Page find: " + pages.size());
 		for(Element page : pages) {
 			try {
 				//LazyLoad Check
-				String pageUrl = page.attr("data-lazy-src");
-				if(pageUrl.equals("")) {
-					pageUrl = page.attr("src");	
-				}
+				String pageUrl = "";
+				if(page.hasAttr("ks-token")) pageUrl = page.attr("ks-token");
+				else if(page.hasAttr("data-lazy-src")) pageUrl = page.attr("data-lazy-src");
+				else if(page.hasAttr("data-src")) pageUrl = page.attr("data-src");
+				else pageUrl = page.attr("src");
 				
 				list.addPage(pageUrl);
 				System.out.println(TAG + " Page parsing Success: " + pageUrl);

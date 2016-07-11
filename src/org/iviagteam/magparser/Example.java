@@ -3,6 +3,7 @@ package org.iviagteam.magparser;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.iviagteam.magparser.callback.*;
 import org.iviagteam.magparser.exception.FailDetourException;
@@ -24,7 +25,6 @@ public class Example {
 					return;
 				}
 				printMaruSearch(list);
-				System.out.println("========== Search test FINISH");
 			}
 		});
 		searchParser.start();
@@ -33,6 +33,7 @@ public class Example {
 		while(searchParser.getStatus() != null && searchParser.getStatus() != MaruSearchParser.Status.DONE) {
 			Thread.sleep(100); //Async wait...
 		}
+		System.out.println("========== Search test FINISH");
 		
 		//Manga volume parse test
 		MaruVolumeParser volumeParser = new MaruVolumeParser("http://marumaru.in/b/manga/64026", new MaruVolumeCallback() {
@@ -40,7 +41,7 @@ public class Example {
 			@Override
 			public void callback(MaruVolumeWrapper result, Exception whenError) {
 				if(whenError != null) {
-					if(whenError instanceof MalformedURLException) {
+					if(whenError instanceof IllegalArgumentException) {
 						System.out.println("Manga volume test: WRONG URL >> " + whenError.toString());
 					}else {
 						System.out.println("Manga volume test: FAIL CONNECT >> " + whenError.toString());
@@ -48,7 +49,6 @@ public class Example {
 					return;
 				}
 				printMaruVolume(result);
-				System.out.println("========== Manga volume parsing test FINISH");
 			}
 		});
 		volumeParser.start();
@@ -57,6 +57,7 @@ public class Example {
 		while(volumeParser.getStatus() != null && volumeParser.getStatus() != MaruVolumeParser.Status.DONE) {
 			Thread.sleep(100); //Async wait...
 		}
+		System.out.println("========== Manga volume parsing test FINISH");
 		
 		//Manga parse test
 		MaruMangaParser mangaParser = new MaruMangaParser("http://www.shencomics.com/archives/571592", new MaruMangaCallback() {
@@ -74,7 +75,7 @@ public class Example {
 					return;
 				}
 				printMaruManga(result);
-				System.out.println("========== Manga parsing test FINISH");
+				
 			}
 		});
 		mangaParser.start();
@@ -83,12 +84,17 @@ public class Example {
 		while(mangaParser.getStatus() != null && mangaParser.getStatus() != MaruMangaParser.Status.DONE) {
 			Thread.sleep(100); //Async wait...
 		}
+		System.out.println("========== Manga parsing test FINISH");
 		
 		System.out.println("========== Cookie cache test START");
-		String cookie = IVIagParser.getCookieCache(); //cookie get
-		System.out.println("Cookie cache: " + cookie);
+		HashMap<String, String> cookieMap = IVIagParser.getCookies(); //cookie get
+		String cookieStr = IVIagParser.cookieStringify(cookieMap); //cookie stringify (when save cookie cache)
+		System.out.println("Cookie cache: " + cookieStr); // print
 		try {
-			IVIagParser.setCookieCache(cookie); //cookie set
+			cookieMap = IVIagParser.cookieParsing(cookieStr); //cookie parsing (when load cookie cache)
+		} catch (Exception e) {} //When this is not instance of cookie string
+		try {
+			IVIagParser.setCookies(cookieMap); //cookie set
 		} catch (Exception e) {} //When this is not instance of cookie
 		System.out.println("========== Cookie cache test FINISH");
 	}

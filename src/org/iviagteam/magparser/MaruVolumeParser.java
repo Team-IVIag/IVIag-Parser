@@ -10,10 +10,11 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class MaruVolumeParser extends IVIagParser{
+public class MaruVolumeParser extends VolumeParser{
 
-	enum Status{IDLE, CONNECTING, IMG_PARSING, VOLUME_PARSING, DONE};
-	
+	public static final String TAG = "MaruVolumeParser";
+	public static final String VOLUME_PREFIX = "http://www";
+	public static final String CF_PATCH_VOLUME_PREFIX = "http://www.shencomics.com/archives/";
 	public static final String VOLUME_IMG_TAG = "{%img}";
 	
 	private Status status = Status.IDLE;
@@ -23,6 +24,7 @@ public class MaruVolumeParser extends IVIagParser{
 	
 	
 	public MaruVolumeParser(String url, MaruVolumeCallback callback) {
+		super(url, callback);
 		this.url = url;
 		this.callback = callback;
 	}
@@ -49,11 +51,12 @@ public class MaruVolumeParser extends IVIagParser{
 		try {
 			this.status = Status.CONNECTING;
 			System.out.println(TAG + " Try to connect '" + this.url + "'...");
-			doc = Jsoup.connect(this.url)
-					.userAgent(USER_AGENT_TOKEN)
+			doc = Jsoup.connect(url)
+					.userAgent(IVIagParser.USER_AGENT_TOKEN)
 					.followRedirects(true)
-					.referrer(REFERRER_PAGE)
-					.timeout(30000)
+					.referrer(IVIagParser.REFERRER_PAGE)
+					.timeout(IVIagParser.TIME_OUT)
+					.cookies(IVIagParser.getCookies())
 					.get();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -62,6 +65,9 @@ public class MaruVolumeParser extends IVIagParser{
 			this.callback.callback(null, e);
 			return;
 		}
+		//Get Title
+		this.status = Status.TITLE_PARSING;
+		list.setTitle(doc.select("#bbsview>.viewbox>.subject>h1").get(0).ownText());
 		
 		//Get Thumbnail
 		this.status = Status.IMG_PARSING;
@@ -88,7 +94,7 @@ public class MaruVolumeParser extends IVIagParser{
 		}
 		
 		this.status = Status.VOLUME_PARSING;
-		Elements magList = doc.select("#vContent a[href^=" + VOLUME_PREFIX + "], #vContent span");
+		Elements magList = doc.select("#vContent a[href^=" + VOLUME_PREFIX + "], #vContent span[cf-patch]");
 		
 		for(Element ele : magList) {
 			try {
@@ -96,14 +102,21 @@ public class MaruVolumeParser extends IVIagParser{
 				String magUrl = ele.attr("href");
 				
 				if(ele.tagName().toLowerCase() == "span"){
-					if(!ele.hasAttr("cf-patch")) continue;
-					
 					String patch = ele.attr("cf-patch");
 					String lastChar = String.valueOf(patch.charAt(patch.length() - 1));
 					
-					patch = patch.replace(lastChar, "").replaceFirst("^0x0*", "");
+					patch = patch.replaceFirst("^0x", "");
+					String removedPatch = "";
 					
-					int mangaId = (int) (Integer.parseInt(patch, 16) / Math.pow(2, Integer.parseInt(lastChar, 16) / 2));
+					for(int i = 1; i <= patch.length(); i++){
+						if(i % 3 == 0) continue;
+						removedPatch += patch.charAt(i - 1);
+					}
+					
+					removedPatch = removedPatch.replaceAll("^0*", "");
+					
+					
+					int mangaId = (int) (Integer.parseInt(removedPatch, 16) / Math.pow(2, Integer.parseInt(lastChar, 16) / 2));
 					magUrl = CF_PATCH_VOLUME_PREFIX + mangaId;
 				}
 				
@@ -111,7 +124,7 @@ public class MaruVolumeParser extends IVIagParser{
 				if(ele.ownText().length() > 0) {
 					magTitle = ele.ownText();
 				}else {
-					magTitle = getOwnText(ele);
+					magTitle = IVIagParser.getOwnText(ele);
 					
 					if(magTitle == null) {
 						magTitle = "undefined";
@@ -119,7 +132,7 @@ public class MaruVolumeParser extends IVIagParser{
 				}
 				
 				//Check repetition
-				int rpIndex = indexOfUrlList(list.getVolumeList(), magUrl);
+				int rpIndex = indexOfUrlList((ArrayList<MaruVolumeUrlWrapper>) list.getVolumeList(), magUrl);
 				if(rpIndex >= 0) {
 					System.out.println(TAG + " This link is repetition (index:" + rpIndex + ") <" + magUrl + "> will be remove");
 					list.getVolumeList().remove(rpIndex);

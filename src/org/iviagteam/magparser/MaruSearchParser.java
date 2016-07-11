@@ -1,6 +1,8 @@
 package org.iviagteam.magparser;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import org.iviagteam.magparser.callback.MaruSearchCallback;
@@ -10,10 +12,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class MaruSearchParser extends IVIagParser{
+public class MaruSearchParser extends SearchParser{
 	
-	enum Status{IDLE, CONNECTING, PARSING, DONE};
-	
+	public static final String TAG = "MaruSearchParser";
 	private Status status = Status.IDLE;
 	private String key;
 	private MaruSearchCallback callback;
@@ -24,6 +25,7 @@ public class MaruSearchParser extends IVIagParser{
 	
 	
 	public MaruSearchParser(String keyword, MaruSearchCallback callback) {
+		super(keyword, callback);
 		this.key = keyword;
 		this.callback = callback;
 	}
@@ -42,17 +44,24 @@ public class MaruSearchParser extends IVIagParser{
 		System.out.println(TAG + " ParseMagSearch - Search request: " + this.key);
 		
 		ArrayList<MaruSearchWrapper> urlList = new ArrayList<>();
-		String url = SEARCH_LINK_SAMPLE.replace("{%k}", this.key);
+		String url;
+		try {
+			url = SEARCH_LINK_SAMPLE.replace("{%k}", URLEncoder.encode(this.key, "UTF-8"));
+		} catch (UnsupportedEncodingException e1) {
+			e1.printStackTrace();
+			return;
+		}
 		Document doc;
 		
 		//Try Connect
 		try {
 			System.out.println(TAG + " try to connect '" + url + "'...");
 			doc = Jsoup.connect(url)
-					.userAgent(USER_AGENT_TOKEN)
+					.userAgent(IVIagParser.USER_AGENT_TOKEN)
 					.followRedirects(true)
-					.referrer(REFERRER_PAGE)
-					.timeout(30000)
+					.referrer(IVIagParser.REFERRER_PAGE)
+					.timeout(IVIagParser.TIME_OUT)
+					.cookies(IVIagParser.getCookies())
 					.get();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -77,7 +86,7 @@ public class MaruSearchParser extends IVIagParser{
 				System.out.println(TAG + " Parsing success: " + title);
 			}catch(Exception e) {
 				e.printStackTrace();
-				System.out.println(TAG + " Fail to parseing: " + ele.toString());
+				System.out.println(TAG + " Failed parsing: " + ele.toString());
 			}
 		}
 		this.status = Status.DONE;
