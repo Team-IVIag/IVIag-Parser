@@ -77,7 +77,7 @@ public class Example {
 				printMaruManga(result);
 				
 			}
-		});
+		}, new String[] {"false"});
 		mangaParser.start();
 		
 		System.out.println("========== Manga parsing test REQUESTED");

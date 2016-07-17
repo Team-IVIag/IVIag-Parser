@@ -4,7 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import org.apache.commons.logging.LogFactory;
+import org.iviagteam.magparser.logger.DefaultLogger;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -107,6 +111,13 @@ public abstract class IVIagParser{
 		return true;
 	}
 	
+	
+	public static void disableLogging(){
+		LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
+	    Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(Level.OFF);
+	    Logger.getLogger("org.apache.commons.httpclient").setLevel(Level.OFF);
+	    DefaultLogger.getInstance().setLog(false);
+	}
 	
 	
 	public static HashMap<String, String> getCookies() {

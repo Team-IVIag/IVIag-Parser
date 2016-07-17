@@ -2,10 +2,11 @@ package org.iviagteam.magparser;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.DomElement;
+//import com.gargoylesoftware.htmlunit.html.DomElement;
 import com.gargoylesoftware.htmlunit.html.DomNodeList;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+
 import org.iviagteam.magparser.callback.MaruMangaCallback;
 import org.iviagteam.magparser.exception.FailDetourException;
 import org.iviagteam.magparser.logger.DefaultLogger;
@@ -22,13 +23,15 @@ public class MaruMangaParser extends MangaParser {
 	private Status status = Status.IDLE;
 	private String url;
 	private MaruMangaCallback callback;
+	private boolean useLegacy;
 	
 	
 	
-	public MaruMangaParser(String url, MaruMangaCallback callback) {
-		super(url, callback);
+	public MaruMangaParser(String url, MaruMangaCallback callback, String[] args) {
+		super(url, callback, args);
 		this.url = url;
 		this.callback = callback;
+		this.useLegacy = Boolean.parseBoolean(args[0]);
 	}
 	
 	
@@ -41,7 +44,8 @@ public class MaruMangaParser extends MangaParser {
 	
 	@Override
 	public void run() {
-		parsing();
+		if(!useLegacy) parsing();
+		else parsingLegacy(url, false);
 	}
 	
 	
@@ -53,7 +57,6 @@ public class MaruMangaParser extends MangaParser {
 	}
 	
 	
-	
 	private void parsing2(String url) {
 
 		if(url.startsWith("https")) url.replaceFirst("https", "http");
@@ -62,6 +65,9 @@ public class MaruMangaParser extends MangaParser {
 			this.status = Status.CONNECTING;
 			DefaultLogger.getInstance().info("Imitating Chrome", TAG);
 			final WebClient webClient = new WebClient(BrowserVersion.CHROME);
+			webClient.getOptions().setActiveXNative(false);
+			webClient.getOptions().setAppletEnabled(false);
+			webClient.getOptions().setCssEnabled(false);
 
 			this.status = Status.PARSING;
 			DefaultLogger.getInstance().info("Connecting...: " + url, TAG);
@@ -90,9 +96,7 @@ public class MaruMangaParser extends MangaParser {
 
 	}
 
-	/*
-	private void parsing(String url, Boolean repeat) {
-
+	public void parsingLegacy(String url, Boolean repeat) {
 		
 		//init
 		MaruMangaWrapper list;
@@ -133,7 +137,7 @@ public class MaruMangaParser extends MangaParser {
 			//Try detour
 			this.status = Status.DETOUR;
 			if(IVIagParser.detourCloudProxy(doc)) {
-				this.parsing(doc.location(), true);
+				this.parsingLegacy(doc.location(), true);
 			}else {
 				this.status = null;
 				this.callback.callback(null, new FailDetourException("Fail to detour CloudProxy"));
@@ -177,5 +181,5 @@ public class MaruMangaParser extends MangaParser {
 		this.status = Status.DONE;
 		this.callback.callback(list, null);
 	}
-	*/
+	
 }

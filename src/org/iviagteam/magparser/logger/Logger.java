@@ -7,6 +7,7 @@ import java.util.Date;
 
 public abstract class Logger{
 	public final SimpleDateFormat format;
+	public boolean logEnabled = true;
 	
 	public Logger(){
 		format = new SimpleDateFormat("[yyyy-MM-dd hh:mm:ss]");
@@ -111,7 +112,15 @@ public abstract class Logger{
 		return "[" + str + "]";
 	}
 	
-	public abstract void log(String str, String tag, EnumLogType t);
+	public void setLog(boolean b){
+		logEnabled = b;
+	}
+	
+	public void log(String str, String tag, EnumLogType t){
+		if(logEnabled) procLog(str, tag, t);
+	}
+	
+	public abstract void procLog(String str, String tag, EnumLogType t);
 }
 
 enum EnumLogType{
