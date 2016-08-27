@@ -13,7 +13,6 @@ import org.jsoup.select.Elements;
 public class MaruVolumeParser extends VolumeParser{
 
 	public static final String TAG = "MaruVolumeParser";
-	public static final String VOLUME_PREFIX = "http://www";
 	public static final String CF_PATCH_VOLUME_PREFIX = "http://www.shencomics.com/archives/";
 	public static final String VOLUME_IMG_TAG = "{%img}";
 	
@@ -94,7 +93,7 @@ public class MaruVolumeParser extends VolumeParser{
 		}
 		
 		this.status = Status.VOLUME_PARSING;
-		Elements magList = doc.select("#vContent a[href^=" + VOLUME_PREFIX + "], #vContent span[cf-patch]");
+		Elements magList = doc.select("#vContent a[href]:not([href^=\"#\"]):not([href^=\"/\"]):not([href^=\"?\"]):not([href^=\"http://marumaru.in\"]), #vContent span[cf-patch]");
 		
 		for(Element ele : magList) {
 			try {
