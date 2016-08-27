@@ -83,8 +83,15 @@ public class MaruMangaParser extends MangaParser {
 			MaruMangaWrapper wrapper = new MaruMangaWrapper(title);
 			DomNodeList<HtmlElement> list = htmlPage.getElementById("content").getElementsByTagName("img");
 			for(HtmlElement element : list) {
-				DefaultLogger.getInstance().debug("Parsed page: " + element.getAttribute("src"), TAG);
-				wrapper.addPage(element.getAttribute("src"));
+				String pageUrl = "";
+				
+				if(element.hasAttribute("ks-token")) pageUrl = element.getAttribute("ks-token");
+				else if(element.hasAttribute("data-lazy-src")) pageUrl = element.getAttribute("data-lazy-src");
+				else if(element.hasAttribute("data-src")) pageUrl = element.getAttribute("data-src");
+				else pageUrl = element.getAttribute("src");
+				
+				DefaultLogger.getInstance().debug("Parsed page: " + pageUrl, TAG);
+				wrapper.addPage(pageUrl);
 			}
 			webClient.close();
 			this.status = Status.DONE;
