@@ -1,5 +1,6 @@
 package org.iviagteam.magparser;
 
+import java.net.URL;
 import java.util.ArrayList;
 
 import org.iviagteam.magparser.callback.MaruVolumeCallback;
@@ -93,8 +94,9 @@ public class MaruVolumeParser extends VolumeParser{
 		}
 		
 		this.status = Status.VOLUME_PARSING;
-		Elements magList = doc.select("#vContent a[href]:not([href^=\"#\"]):not([href^=\"/\"]):not([href^=\"?\"]):not([href^=\"http://marumaru.in\"]), #vContent span[cf-patch]");
+		Elements magList = doc.select("#vContent a[href]:not([href^=\"#\"]):not([href^=\"/\"]):not([href^=\"?\"]):not([href^=\"http://marumaru.in\"]):not([href^=\"http://imgur\"]), #vContent span[cf-patch]");
 		
+		ArrayList<MaruVolumeUrlWrapper> suspiciousList = new ArrayList<>();
 		for(Element ele : magList) {
 			try {
 				String magTitle;
@@ -137,12 +139,33 @@ public class MaruVolumeParser extends VolumeParser{
 					list.getVolumeList().remove(rpIndex);
 				}
 				
-				list.addVolume(magTitle, magUrl);
-				System.out.println(TAG + " Manga url parsing success: " + magTitle);
-				
+				try{
+					URL mUrl = new URL(magUrl);
+					String host = mUrl.getHost();
+					if(!host.contains("comic") && !magUrl.contains("archives")){
+						System.out.println(TAG + " Suspicious link : " + magUrl);
+						suspiciousList.add(new MaruVolumeUrlWrapper(magTitle, magUrl, host));
+					}else{
+						list.addVolume(magTitle, magUrl, host);
+						System.out.println(TAG + " Manga url parsing success: " + magTitle);
+					}
+				}catch(Exception e){
+					//Skip
+					System.out.println(TAG + " Skipping " + magUrl + ". Reason: Error while parsing url");
+				}
 			}catch(Exception e) {//fail
 				e.printStackTrace();
 				System.out.println(TAG + " Manga url parsing fail: " + ele.toString());
+			}
+		}
+		
+		for(MaruVolumeUrlWrapper w : suspiciousList){
+			int hostAmount = sameHostAmount((ArrayList<MaruVolumeUrlWrapper>) list.getVolumeList(), w.getHost());
+			if(hostAmount < 2){
+				System.out.println(TAG + " Skipping " + w.getUrl() + ". Reason: suspicious link");
+			}else{
+				list.getVolumeList().add(w);
+				System.out.println(TAG + " Manga url parsing success: " + w.getName());
 			}
 		}
 		
@@ -157,5 +180,14 @@ public class MaruVolumeParser extends VolumeParser{
 			if(ele.getUrl() == url) return list.indexOf(ele);
 		}
 		return -1;
+	}
+	
+	private int sameHostAmount(ArrayList<MaruVolumeUrlWrapper> list, String host){
+		int hostAmount = 0;
+		for(MaruVolumeUrlWrapper ele : list){
+			if(ele.getHost() == host) hostAmount++; 
+		}
+		
+		return hostAmount;
 	}
 }

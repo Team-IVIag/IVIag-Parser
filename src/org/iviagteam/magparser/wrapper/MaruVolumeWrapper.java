@@ -16,6 +16,11 @@ public class MaruVolumeWrapper extends VolumeWrapper{
 	}
 	
 	@Override
+	public void addVolume(String name, String url, String host){
+		this.list.add(new MaruVolumeUrlWrapper(name, url, host));
+	}
+	
+	@Override
 	public ArrayList<MaruVolumeUrlWrapper> getVolumeList(){
 		return this.list;
 	}

@@ -16,6 +16,7 @@ public abstract class VolumeWrapper {
 	}
 	
 	public abstract void addVolume(String name, String url);
+	public abstract void addVolume(String name, String url, String host);
 	
 	public ArrayList<String> getThumbs() {
 		return this.thumbList;
