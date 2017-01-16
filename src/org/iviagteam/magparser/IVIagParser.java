@@ -20,12 +20,12 @@ import org.mozilla.javascript.Scriptable;
  * 
  * @author SemteulGaram, Khinenw
  * @since 2016.02.06~2016.02.16
- * @version 3.0
+ * @version 4.0
  */
 
 public abstract class IVIagParser{
 	
-	public static final String VERSION = "3.0";
+	public static final String VERSION = "4.0";
 	public static final int VERSION_CODE = 7;
 	public static final String TAG = "IVIagParser";
 	public static final String DETOUR_TAG = "IVIagParser::DetourProxy";
@@ -33,6 +33,7 @@ public abstract class IVIagParser{
 	public static final String REFERRER_PAGE = "http://marumaru.in";
 	public static final int TIME_OUT = 30000; //Need more? :[
 	
+	public static String passcode = "qndxkr";
 	
 	public static final String MAG_TITLE_TAG = "{%title}";
 	public static final String ILLEGAL_CHARS = "\\/:?\"*<>|";

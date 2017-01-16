@@ -1,7 +1,10 @@
 package org.iviagteam.magparser;
 
+import java.net.URI;
+
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.DomNode;
 //import com.gargoylesoftware.htmlunit.html.DomElement;
 import com.gargoylesoftware.htmlunit.html.DomNodeList;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
@@ -11,6 +14,7 @@ import org.iviagteam.magparser.callback.MaruMangaCallback;
 import org.iviagteam.magparser.exception.FailDetourException;
 import org.iviagteam.magparser.logger.DefaultLogger;
 import org.iviagteam.magparser.wrapper.MaruMangaWrapper;
+import org.jsoup.Connection.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -57,7 +61,7 @@ public class MaruMangaParser extends MangaParser {
 	}
 	
 	
-	private void parsing2(String url) {
+	private void parsing2(String url, String passcode) {
 
 		if(url.startsWith("https")) url.replaceFirst("https", "http");
 
@@ -81,9 +85,10 @@ public class MaruMangaParser extends MangaParser {
 			}
 			DefaultLogger.getInstance().info("Parsing...: " + title, TAG);
 			MaruMangaWrapper wrapper = new MaruMangaWrapper(title);
-			DomNodeList<HtmlElement> list = htmlPage.getElementById("content").getElementsByTagName("img");
-			for(HtmlElement element : list) {
+			DomNodeList<DomNode> list = htmlPage.querySelectorAll("gallery-template img");
+			for(DomNode elem : list) {
 				String pageUrl = "";
+				HtmlElement element = (HtmlElement) elem;
 				
 				if(element.hasAttribute("ks-token")) pageUrl = element.getAttribute("ks-token");
 				else if(element.hasAttribute("data-lazy-src")) pageUrl = element.getAttribute("data-lazy-src");
@@ -102,8 +107,12 @@ public class MaruMangaParser extends MangaParser {
 		}
 
 	}
+	
+	public void parsing2(String url){
+		parsing2(url, IVIagParser.passcode);
+	}
 
-	public void parsingLegacy(String url, Boolean repeat) {
+	public void parsingLegacy(String url, boolean repeat, String passcode) {
 		
 		//init
 		MaruMangaWrapper list;
@@ -116,13 +125,16 @@ public class MaruMangaParser extends MangaParser {
 		try {
 			System.out.println(TAG + " Try to connect '" + url + "'...");
 
-			doc = Jsoup.connect(url)
+			Response resp = Jsoup.connect(url)
 					.userAgent(IVIagParser.USER_AGENT_TOKEN)
 					.followRedirects(true)
 					.referrer(IVIagParser.REFERRER_PAGE)
 					.timeout(IVIagParser.TIME_OUT)
 					.cookies(IVIagParser.getCookies())
-					.get();
+					.data("pass", passcode)
+					.execute();
+			url = resp.url().toString();
+			doc = resp.parse();
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println(TAG + " Connection error");
@@ -154,9 +166,10 @@ public class MaruMangaParser extends MangaParser {
 		
 		//Title parsing
 		this.status = Status.PARSING;
-		Elements title = doc.select("#content .entry-title");
+		Elements title = doc.select(".article-title");
 		try {
-			String titleStr = IVIagParser.getOwnText(title.get(0));
+			//String titleStr = IVIagParser.getOwnText(title.get(0));
+			String titleStr = title.attr("title");
 			list = new MaruMangaWrapper(titleStr);
 			System.out.println(TAG + " Title parsing success: " + titleStr);
 		} catch (Exception e) {
@@ -166,8 +179,17 @@ public class MaruMangaParser extends MangaParser {
 		}
 		
 		//Manga parsing
-		Elements pages = doc.select("#content img[ks-token], #content img[data-src], #content img[data-lazy-src], #content img[src~=(?i)\\.(png|jpe?g|gif|bmp)]");
+		Elements pages = doc.select(".gallery-template img[ks-token], .gallery-template img[data-src], .gallery-template img[data-lazy-src], .gallery-template img[src~=(?i)\\.(png|jpe?g|gif|bmp)]");
 		System.out.println(TAG + " Page find: " + pages.size());
+		URI a;
+		try {
+			a = new URI(url);
+		}catch(Exception e){
+			e.printStackTrace();
+			this.callback.callback(null, e);
+			return;
+		}
+		
 		for(Element page : pages) {
 			try {
 				//LazyLoad Check
@@ -177,7 +199,7 @@ public class MaruMangaParser extends MangaParser {
 				else if(page.hasAttr("data-src")) pageUrl = page.attr("data-src");
 				else pageUrl = page.attr("src");
 				
-				list.addPage(pageUrl);
+				list.addPage(a.resolve(pageUrl).toString());
 				System.out.println(TAG + " Page parsing Success: " + pageUrl);
 			}catch(Exception e) {
 				e.printStackTrace();
@@ -188,5 +210,10 @@ public class MaruMangaParser extends MangaParser {
 		this.status = Status.DONE;
 		this.callback.callback(list, null);
 	}
+	
+	public void parsingLegacy(String url, boolean repeat){
+		parsingLegacy(url, repeat, IVIagParser.passcode);
+	}
+
 	
 }
