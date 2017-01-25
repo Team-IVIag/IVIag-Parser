@@ -1,6 +1,9 @@
 package org.iviagteam.magparser;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.WebClient;
@@ -199,7 +202,18 @@ public class MaruMangaParser extends MangaParser {
 				else if(page.hasAttr("data-src")) pageUrl = page.attr("data-src");
 				else pageUrl = page.attr("src");
 				
-				list.addPage(a.resolve(pageUrl).toString());
+				URI pageUri = null;
+				
+				try{
+					pageUri = a.resolve(pageUrl);
+				}catch(Exception e){
+					String[] split = pageUrl.split("/");
+					split[split.length - 1] = URLEncoder.encode(split[split.length - 1], "UTF-8");
+					pageUrl = Arrays.stream(split).collect(Collectors.joining("/"));
+					pageUri = a.resolve(pageUrl);
+				}
+				
+				list.addPage(pageUri.toString());
 				System.out.println(TAG + " Page parsing Success: " + pageUrl);
 			}catch(Exception e) {
 				e.printStackTrace();
