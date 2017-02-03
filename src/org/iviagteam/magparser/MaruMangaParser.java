@@ -202,15 +202,15 @@ public class MaruMangaParser extends MangaParser {
 				else if(page.hasAttr("data-src")) pageUrl = page.attr("data-src");
 				else pageUrl = page.attr("src");
 				
-				URI pageUri = null;
+				String pageUri = null;
 				
 				try{
-					pageUri = a.resolve(pageUrl);
+					pageUri = a.resolve(pageUrl).toString();
 				}catch(Exception e){
 					String[] split = pageUrl.split("/");
 					split[split.length - 1] = URLEncoder.encode(split[split.length - 1], "UTF-8");
 					pageUrl = Arrays.stream(split).collect(Collectors.joining("/"));
-					pageUri = a.resolve(pageUrl);
+					pageUri = a.resolve(pageUrl).toString().replace("+", "%20");
 				}
 				
 				list.addPage(pageUri.toString());
