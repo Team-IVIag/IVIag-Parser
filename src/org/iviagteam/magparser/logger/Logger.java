@@ -8,6 +8,7 @@ import java.util.Date;
 public abstract class Logger{
 	public final SimpleDateFormat format;
 	public boolean logEnabled = true;
+	public boolean ignoreDebug = true;
 	
 	public Logger(){
 		format = new SimpleDateFormat("[yyyy-MM-dd hh:mm:ss]");
@@ -77,7 +78,8 @@ public abstract class Logger{
 	}
 	
 	public void debug(String str, String tag){
-		log(str, getDefaultDebugTag() + " " + makeTag(tag), EnumLogType.DEBUG);
+		if(!ignoreDebug)
+			log(str, getDefaultDebugTag() + " " + makeTag(tag), EnumLogType.DEBUG);
 	}
 	
 	public void debug(String str){

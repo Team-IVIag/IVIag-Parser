@@ -17,6 +17,9 @@ import org.iviagteam.magparser.callback.MaruMangaCallback;
 import org.iviagteam.magparser.exception.FailDetourException;
 import org.iviagteam.magparser.logger.DefaultLogger;
 import org.iviagteam.magparser.wrapper.MaruMangaWrapper;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.jsoup.Connection.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -127,6 +130,7 @@ public class MaruMangaParser extends MangaParser {
 		this.status = Status.CONNECTING;
 		try {
 			System.out.println(TAG + " Try to connect '" + url + "'...");
+			System.out.println(TAG + " Using cookie " + IVIagParser.getCookies().toString());
 
 			Response resp = Jsoup.connect(url)
 					.userAgent(IVIagParser.USER_AGENT_TOKEN)
@@ -134,8 +138,9 @@ public class MaruMangaParser extends MangaParser {
 					.referrer(IVIagParser.REFERRER_PAGE)
 					.timeout(IVIagParser.TIME_OUT)
 					.cookies(IVIagParser.getCookies())
-					.data("pass", passcode)
+					//.data("pass", passcode)
 					.execute();
+			System.out.println(resp.cookies());
 			url = resp.url().toString();
 			doc = resp.parse();
 		} catch (Exception e) {
@@ -181,9 +186,14 @@ public class MaruMangaParser extends MangaParser {
 			list = new MaruMangaWrapper("Undefined");
 		}
 		
+		Elements passbox = doc.select(".pass-box");
+		if(passbox.size() > 0) {
+			this.callback.callback(null, new Exception("PHPSESSID가 설정되지 않았습니다."));
+			return;
+		}
+		
 		//Manga parsing
 		Elements pages = doc.select(".gallery-template img[ks-token], .gallery-template img[data-src], .gallery-template img[data-lazy-src], .gallery-template img[src~=(?i)\\.(png|jpe?g|gif|bmp)]");
-		System.out.println(TAG + " Page find: " + pages.size());
 		URI a;
 		try {
 			a = new URI(url);
@@ -221,6 +231,42 @@ public class MaruMangaParser extends MangaParser {
 			}
 		}
 		
+		Elements signature = doc.select("[data-signature]");
+		int sigSize = 0;
+		if(signature.size() > 0) {
+			String attr = signature.attr("data-signature");
+			String key = signature.attr("data-key");
+			
+			try {
+				Response resp = Jsoup.connect(a.toString().replace("archives", "assets") + "/1.json")
+						.userAgent(IVIagParser.USER_AGENT_TOKEN)
+						.followRedirects(true)
+						.referrer(IVIagParser.REFERRER_PAGE)
+						.timeout(IVIagParser.TIME_OUT)
+						.cookies(IVIagParser.getCookies())
+						.data("signature", attr, "key", key)
+						.ignoreContentType(true)
+						.execute();
+				
+				JSONParser parser = new JSONParser();
+				JSONObject obj = (JSONObject) parser.parse(resp.body());
+				JSONArray arr = (JSONArray) obj.get("sources");
+				sigSize = arr.size();
+				
+				for(int i = 0; i < sigSize; i++) {
+					String source = (String) arr.get(i);
+					String[] split = source.split("/");
+					split[split.length - 1] = URLEncoder.encode(split[split.length - 1], "UTF-8");
+					list.addPage(a.resolve(String.join("/", split)).toString().replace("+", "%20"));
+				}
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println(TAG + " Signature parsing failed...");
+			}
+		}
+		
+		System.out.println(TAG + " Page find: " + (pages.size() + sigSize));
 		this.status = Status.DONE;
 		this.callback.callback(list, null);
 	}
